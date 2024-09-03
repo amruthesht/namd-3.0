@@ -1,0 +1,13 @@
+NAMD_ARCH = MacOS-ARM64
+CHARMARCH = multicore-darwin-arm8-clang
+
+FLOATOPTS = -O3
+
+CXX = clang++ -std=c++11 -stdlib=libc++
+CXXOPTS = -mmacos-version-min=11.0 -D_REENTRANT -D_NO_MALLOC_H $(FLOATOPTS)
+CC = clang -std=c99
+COPTS = -mmacos-version-min=11.0 -D_REENTRANT -D_NO_MALLOC_H $(FLOATOPTS)
+
+EXTRALINKLIBS = -framework CoreFoundation
+PSFGENLINKLIBS = -framework CoreFoundation
+

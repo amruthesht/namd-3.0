@@ -1,0 +1,136 @@
+#ifndef HIPDEF_H
+#define HIPDEF_H
+#ifdef NAMD_HIP
+// #define __ldg *
+#ifndef NAMD_CUDA
+#ifndef __align__
+#define __align__ alignas
+#endif
+#define cudaGetDevice hipGetDevice
+#define cudaGetDeviceCount hipGetDeviceCount
+#define cudaSetDevice hipSetDevice
+#define cudaSetDeviceFlags hipSetDeviceFlags
+#define cudaDeviceReset hipDeviceReset
+#define cudaDeviceMapHost hipDeviceMapHost
+#define cudaDeviceProp hipDeviceProp_t
+#define cudaGetDeviceProperties hipGetDeviceProperties
+#define cudaDeviceGetStreamPriorityRange hipDeviceGetStreamPriorityRange
+#define cudaStreamDefault hipStreamDefault
+#define cudaStreamCreate hipStreamCreate
+#define cudaStreamCreateWithPriority hipStreamCreateWithPriority
+#define cudaStreamDestroy hipStreamDestroy
+#define cudaStreamWaitEvent hipStreamWaitEvent
+#define cudaStreamSynchronize hipStreamSynchronize
+#define cudaDeviceSynchronize hipDeviceSynchronize
+#define cudaStream_t hipStream_t
+#define cudaDeviceCanAccessPeer hipDeviceCanAccessPeer
+#define cudaDeviceEnablePeerAccess hipDeviceEnablePeerAccess
+#define cudaErrorPeerAccessAlreadyEnabled hipErrorPeerAccessAlreadyEnabled
+#define cudaDeviceEnablePeerAccess hipDeviceEnablePeerAccess
+#define cudaDeviceDisablePeerAccess hipDeviceDisablePeerAccess
+#define cudaComputeModeProhibited hipComputeModeProhibited
+#define cudaComputeModeExclusive hipComputeModeExclusive
+#define cudaResourceDesc hipResourceDesc
+#define cudaDeviceGetP2PAttribute hipDeviceGetP2PAttribute
+#define cudaDevP2PAttrNativeAtomicSupported hipDevP2PAttrNativeAtomicSupported
+//Events
+#define cudaEventCreate hipEventCreate
+#define cudaEventQuery hipEventQuery
+#define cudaEventRecord hipEventRecord
+#define cudaEventDestroy hipEventDestroy
+#define cudaEventCreateWithFlags hipEventCreateWithFlags
+#define cudaEventDisableTiming hipEventDisableTiming
+#define cudaEventSynchronize hipEventSynchronize
+#define cudaEvent_t hipEvent_t
+#define cudaError_t hipError_t
+#define cudaGetLastError hipGetLastError
+#define cudaGetErrorString hipGetErrorString
+//Status definitions
+#define cudaSuccess hipSuccess
+#define cudaErrorNotReady hipErrorNotReady
+#define cudaErrorSetOnActiveProcess hipErrorSetOnActiveProcess
+
+//Textures
+// NOTE: Textures are not supported on gfx94x targets
+//       If compiling for MI300 - Need to manually include -DUSE_TABLE_ARRAYS to CXXOPTS and CUDAOPTS 
+#ifndef USE_TABLE_ARRAYS
+#define cudaTextureObject_t hipTextureObject_t
+#define cudaAddressModeClamp hipAddressModeClamp
+#define cudaFilterModePoint hipFilterModePoint
+#define cudaFilterModeLinear hipFilterModeLinear
+#define cudaCreateTextureObject hipCreateTextureObject
+#define cudaBindTextureToArray hipBindTextureToArray
+#define cudaBindTexture hipBindTexture
+#define cudaDestroyTextureObject hipDestroyTextureObject
+#define cudaArray hipArray
+#define cudaArray_t hipArray_t
+#define cudaChannelFormatDesc hipChannelFormatDesc
+#define cudaChannelFormatKindFloat hipChannelFormatKindFloat
+#define cudaResourceTypeArray hipResourceTypeArray
+#define cudaTextureDesc hipTextureDesc
+#define cudaResourceTypeLinear hipResourceTypeLinear
+#endif
+
+//Memory management
+#define cudaHostAllocMapped hipHostMallocMapped
+#define cudaHostAlloc hipHostMalloc
+#define cudaMemset hipMemset
+#define cudaMemsetAsync hipMemsetAsync
+#define cudaHostAllocDefault hipHostMallocDefault
+#define cudaFree hipFree
+#define cudaFreeArray hipFreeArray
+#define cudaFreeHost hipHostFree
+#define cudaMalloc hipMalloc
+#define cudaMallocArray hipMallocArray
+#define cudaMallocHost hipHostMalloc
+#define cudaMallocManaged hipMallocManaged
+#define cudaMemcpy hipMemcpy
+#define cudaMemcpyAsync hipMemcpyAsync
+#define cudaMemcpyPeerAsync hipMemcpyPeerAsync
+#define cudaMemcpyToArray hipMemcpyToArray
+#define cudaMemcpyHostToDevice hipMemcpyHostToDevice
+#define cudaMemcpyDeviceToHost hipMemcpyDeviceToHost
+#define cudaMemcpyDeviceToDevice hipMemcpyDeviceToDevice
+#define cudaMemcpyToSymbol hipMemcpyToSymbol
+#define cudaMemcpyToSymbolAsync hipMemcpyToSymbolAsync
+#define cudaMemcpy3DAsync hipMemcpy3DAsync
+#define cudaMemcpy3DParms hipMemcpy3DParms
+#define cudaMemcpy3DPeerAsync hipMemcpy3DPeerAsync
+#define cudaReadModeElementType hipReadModeElementType
+#define cudaHostGetDevicePointer hipHostGetDevicePointer
+#define cudaSharedMemBankSizeEightByte hipSharedMemBankSizeEightByte
+#define make_cudaPos make_hipPos
+#define make_cudaPitchedPtr make_hipPitchedPtr
+#define make_cudaExtent make_hipExtent
+//hiprand
+#define curandGenerator_t hiprandGenerator_t
+#define curandStatus_t hiprandStatus_t
+#define curandDestroyGenerator hiprandDestroyGenerator
+#define curandCreateGenerator hiprandCreateGenerator
+#define curandSetPseudoRandomGeneratorSeed hiprandSetPseudoRandomGeneratorSeed
+#define curandSetStream hiprandSetStream
+#define curandGenerateNormal hiprandGenerateNormal
+#define CURAND_STATUS_SUCCESS HIPRAND_STATUS_SUCCESS
+#define CURAND_RNG_PSEUDO_DEFAULT HIPRAND_RNG_PSEUDO_DEFAULT
+//hipfft
+#define cufftHandle hipfftHandle
+#define cufftType_t hipfftType_t
+#define CUFFT_R2C HIPFFT_R2C
+#define CUFFT_C2R HIPFFT_C2R
+#define cufftExecC2R hipfftExecC2R
+#define cufftExecR2C hipfftExecR2C
+#define cufftResult hipfftResult
+#define cufftPlan3d hipfftPlan3d
+#define CUFFT_SUCCESS HIPFFT_SUCCESS
+#define cufftReal hipfftReal
+#define cufftPlanMany hipfftPlanMany
+#define cufftSetStream hipfftSetStream
+#define cufftDestroy hipfftDestroy
+#define CUFFT_C2C HIPFFT_C2C
+#define cufftComplex hipfftComplex
+#define CUFFT_FORWARD HIPFFT_FORWARD
+#define cufftExecC2C hipfftExecC2C
+#define CUFFT_INVERSE HIPFFT_BACKWARD
+#endif
+#endif
+#endif

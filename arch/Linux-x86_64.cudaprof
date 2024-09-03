@@ -1,0 +1,5 @@
+# redefine for profiling
+# (NVTX3 makes it no longer necessary to link libnvToolsExt)
+#CUDALIB+=-lnvToolsExt
+CUDAFLAGS+=-DNAMD_NVTX_ENABLED
+

@@ -1,0 +1,14 @@
+NAMD_ARCH = Linux-x86_64
+CHARMARCH = multicore-linux-x86_64-iccstatic
+
+#FLOATOPTS = -ip -O3 -xAVX -qopt-zmm-usage=high -fp-model fast=2 -no-prec-div -qoverride-limits -DNAMD_DISABLE_SSE -qopenmp-simd
+FLOATOPTS = -axAVX -qopenmp-simd
+
+CXX = icpx -std=c++11
+CXXOPTS = -O2 $(FLOATOPTS)
+CXXNOALIASOPTS = -O2 -fno-alias $(FLOATOPTS)
+CXXCOLVAROPTS = -O2 
+
+CC = icx
+COPTS = -O2 $(FLOATOPTS)
+

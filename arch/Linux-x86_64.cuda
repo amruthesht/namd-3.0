@@ -1,0 +1,27 @@
+# set CUDA base build definitions here
+# must also include *.cuda# file for major version #
+
+CUBDIR=.rootdir/cub
+CUBINCL=-I$(CUBDIR)
+CUDA_COMPILER_FLAGS = -m64 -std=c++11
+CUDA_COMPILER_FLAGS += -DCUB_IGNORE_DEPRECATED_CPP_DIALECT
+CUDA_COMPILER_FLAGS += -DTHRUST_IGNORE_DEPRECATED_CPP_DIALECT
+ifneq ($(NVHPCSDK_DIR),)
+  CUDAINCL=-I$(NVHPCSDK_DIR)/cuda/include -I$(NVHPCSDK_DIR)/math_libs/include
+  CUDALIB=-L$(NVHPCSDK_DIR)/cuda/lib64 -L$(NVHPCSDK_DIR)/math_libs/lib64 -lcurand_static -lcufft_static -lculibos -lcudart_static -lrt
+  CUDACC=$(NVHPCSDK_DIR)/compilers/bin/nvcc $(CUDA_COMPILER_FLAGS)
+  CUDASODIR=$(NVHPCSDK_DIR)/math_libs/lib64
+else
+  CUDAINCL=-I$(CUDADIR)/include
+  CUDALIB=-L$(CUDADIR)/lib64 -lcurand_static -lcufft_static -lculibos -lcudart_static -lrt
+  CUDACC=$(CUDADIR)/bin/nvcc $(CUDA_COMPILER_FLAGS)
+  CUDASODIR=$(CUDADIR)/lib64
+endif
+
+LIBCUDARTSO=
+CUDAFLAGS=-DNAMD_CUDA
+CUDAOBJS=$(CUDAOBJSRAWSTATIC)
+CUDA=$(CUDAFLAGS) -I. $(CUBINCL) $(CUDAINCL)
+
+CUDACCOPTS=-O3 --maxrregcount 48 $(CUDAGENCODE) $(CUDA) -use_fast_math -Xptxas -v
+

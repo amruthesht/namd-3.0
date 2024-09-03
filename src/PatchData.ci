@@ -1,0 +1,7 @@
+module PatchData {
+
+  nodegroup PatchData {
+    entry PatchData(void);
+  };
+}
+

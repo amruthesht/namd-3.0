@@ -1,0 +1,7 @@
+NAMD_ARCH = Linux-x86_64
+CHARMARCH = multicore-linux-x86_64
+
+CXX = g++ -m64 -std=c++11 
+CXXOPTS = -O3 -fexpensive-optimizations -ffast-math -mavx512f -mavx512dq -DNAMD_AVXTILES
+CC = gcc -m64
+COPTS = -O3 -fexpensive-optimizations -ffast-math -mavx512f -mavx512dq -DNAMD_AVXTILES

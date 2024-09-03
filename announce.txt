@@ -1,0 +1,127 @@
++--------------------------------------------------------------------+
+|                                                                    |
+|                  NAMD 3.0 Release Announcement                     |
+|                                                                    |
++--------------------------------------------------------------------+
+
+                                                         June 14, 2024
+
+The Theoretical and Computational Biophysics Group at the University of
+Illinois is proud to announce the public release of a new version of
+NAMD, a parallel, object-oriented molecular dynamics code designed for
+high-performance simulation of large biomolecular systems.  NAMD is
+distributed free of charge and includes source code.  NAMD development
+is supported by the NIH National Institute of General Medical Sciences
+through grant numbers NIH P41-GM104601 and NIH R24-GM145965.
+
+NAMD 3.0 has many advantages over NAMD 2.14, including:
+
+- GPU-resident mode providing very fast dynamics:
+
+  - Achieves 2x or more speedup on single GPU versus GPU-offload mode,
+    and 7x or more speedup for multi-GPU scaling on NVIDIA DGX-A100 
+    versus GPU-offload mode
+
+  - Supports single GPU and single-node multi-GPU scaling for
+    tightly coupled GPUs (e.g. NVLink-enabled architectures like DGX)
+
+  - Improved performance for small systems (e.g., 23.6k atom DHFR benchmark
+    using hydrogen mass repartitioning with AMBER force field parameters
+    can achieve over 1 microsecond/day simulation rates on NVIDIA A100)
+
+  - Supports essential dynamics simulation protocols:
+    constant energy, thermostats, barostats, rigid bond constraints, 
+    multiple time stepping, PME
+
+  - Supports standard TIP3P and advanced 4-site water models (TIP4P and OPC)
+
+  - Supports minimize and run directives through TCL scripting
+
+  - Supports several advanced features:
+    replica-exchange MD, alchemical free energy methods (FEP & TI),
+    REST2, harmonic restraints, external electric field, SMD, Colvars, 
+    TCL forces, Monte Carlo barostat, group position restraints,
+    constant pH MD
+
+- GPU-accelerated alchemical free energy methods (FEP & TI)
+  for both GPU-offload and GPU-resident modes
+
+  - Supports van der Waals force switching for alchemy on both GPU modes
+
+- HIP kernel improvements for better performance on AMD GPUs
+
+- CPU-vectorization mode compatible with Intel and AMD CPU models 
+  that support AVX-512 instructions
+
+  - Achieves speedup of up to 1.8x on Intel Xeon over AVX2 builds
+
+  - Exhibits good scaling on TACC Frontera supercomputer
+
+- Extend REST2 force field compatibility
+
+- Update Colvars to version 2024-06-04
+
+- Update user guide documentation for GPU-resident mode
+
+- Fix several long-standing issues
+
+  - Fix CPU memory leaks
+
+  - Fix race conditions running GPU-resident mode with Colvars or TCL forces
+
+  - Fix GPU-resident mode running constant pressure with harmonic restraints
+
+  - Fix race conditions and NaNs running alchemy on GPU
+
+  - Fix using advanced features together with GPU atom migration
+
+  - Implement moving averages for GPU-resident reduction averages
+
+  - Update config file parameters to use "GPU" rather than "CUDA" naming
+
+  - Improve guard against running GPU-resident with unsupported features
+
+- Update Psfgen to version 2.0
+
+  - Fix compatibility with constant-pH MD
+
+- Update to TCL version 8.6.13 for GPU-resident with Colvars and TCL forces
+
+- Update to Charm++ 8.0.0, enabling:
+
+  - Updated implementation of atomics, locks, and fences to use
+    C++11/C11 versions where suitable
+
+  - Improved performance, support, and fixes for UCX
+
+  - Improved scaling on InfiniBand via ucx network layer
+
+  - Improved multi-copy on POWER via pamilrts network layer
+
+  - Clean exit with non-zero status for many failures
+
+  - Improved scaling on HPE/Cray Slingshot 11 via ofi network layer
+
+- Support for CUDA versions 9.1-12.x on Maxwell or newer GPUs
+
+- Support for compatible AMD GPUs via HIP
+
+Details at http://www.ks.uiuc.edu/Research/namd/3.0/features.html
+
+Benchmarks at https://www.ks.uiuc.edu/Research/namd/benchmarks/
+
+NAMD is available from http://www.ks.uiuc.edu/Research/namd/
+
+For your convenience, NAMD has been ported to and will be installed
+on the machines at the NSF-sponsored national supercomputing centers.
+If you are planning substantial simulation work of an academic nature
+you should apply for these resources.  Benchmarks for your proposal
+are available at http://www.ks.uiuc.edu/Research/namd/performance.html
+
+The Theoretical and Computational Biophysics Group encourages NAMD users
+to be closely involved in the development process through reporting
+bugs, contributing fixes, periodical surveys and via other means.
+Questions or comments may be directed to namd@ks.uiuc.edu.
+
+We are eager to hear from you, and thank you for using our software!
+

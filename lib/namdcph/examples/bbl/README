@@ -1,0 +1,45 @@
+Instructions for running the bbl example
+
+This example is designed to demonstrate running constant-pH MD using 
+NAMD's GPU-resident code path.
+
+There are two new config file parameters:
+
+cphUseGpu           on   ;# use GPU-resident code path
+cphNumEquilMDSteps  1000 ;# minimize with MD 0.1 fs timestepping at 0K
+
+In order to run, you need both a GPU-resident build and a CPU-only build 
+for running psfgen. You also need to define environment variables that will 
+be used by the control scripts. Note that catdcd is available through VMD. 
+Example settings below demonstrate environment definitions for running bbl.
+
+$ export CPU_PATH=/path/to/cpu-only-build/namd3
+$ export GPU_PATH=/path/to/gpu-resident-build/namd3
+$ export CONFIG_FILE=bbl.namd
+$ export CATDCD_PATH=/path/to/catdcd
+$ export NUM_THREADS=1
+
+For this small system (~13.3k atoms), you get much better performance using 
+just 1 CPU core. A possible rule-of-thumb on modern CPUs is 1 core for every 
+25k atoms. Scheduling too many cores without a sufficient amount of work per 
+core degrades performance. 
+
+After defining the environment variables above, run as follows:
+
+$ $CPU_PATH +p$NUM_THREADS +setcpuaffinity $CONFIG_FILE
+
+You can also modify the config file to use the standard minimizer rather 
+than performing short time stepping at low temperature
+
+Running
+
+$ time $CPU_PATH +p$NUM_THREADS +setcpuaffinity $CONFIG_FILE
+
+measured the following total runtimes for NVIDIA A6000 GPU workstation:
+
+Total time for cphNumMinSteps=200:       2m47s
+Total time for cphNumEquilMDSteps=1000:  2m20s
+
+Equilibrium dynamics simulation performed in the range of 220-250 ns/day.
+Non-equilibrium switching performed in the range of 115-120 ns/day.
+
