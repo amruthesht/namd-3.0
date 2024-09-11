@@ -50,9 +50,9 @@ friend class SimParameters;
    //  output coords to dcd file
    //  Pass non-NULL Lattice to include unit cell in the timesteps.
    int output_dcdfile(int, int, FloatVector *, const Lattice *); 
-   void output_veldcdfile(int, int, Vector *); 	//  output velocities to
+   void output_veldcdfile(int, int, FloatVector *); 	//  output velocities to
 						//  dcd file
-   void output_forcedcdfile(int, int, Vector *); //  output forces to
+   void output_forcedcdfile(int, int, FloatVector *); //  output forces to
 						//  dcd file
 
    void output_restart_coordinates(Vector *, int, int);
@@ -84,16 +84,16 @@ public :
    void energy(int, BigReal *);			//  Output energies
 
    static int coordinateNeeded(int);
-   void coordinate(int, int, Vector *, FloatVector *, Lattice &);
+   void coordinate(int, int, Vector *, FloatVector *, Lattice &, BigReal &);
 						//  Produce appropriate 
 						//  coordinate output for 
 						//  the current timestep
    static int velocityNeeded(int);
-   void velocity(int, int, Vector *);		//  Produce appropriate velocity
+   void velocity(int, int, Vector *, FloatVector *);		//  Produce appropriate velocity
 						//  output for the current 
 						//  timestep
    static int forceNeeded(int);
-   void force(int, int, Vector *);		//  Produce appropriate force
+   void force(int, int, Vector *, FloatVector *);		//  Produce appropriate force
 						//  output for the current 
 						//  timestep
 

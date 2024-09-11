@@ -108,7 +108,7 @@ void CollectionMgr::submitPositions(int seq, FullAtomList &a,
   }
 }
 
-void CollectionMgr::submitVelocities(int seq, int zero, FullAtomList &a)
+void CollectionMgr::submitVelocities(int seq, int zero, FullAtomList &a, int prec)
 {
   int numAtoms = a.size();
   AtomIDList aid(numAtoms);
@@ -121,7 +121,7 @@ void CollectionMgr::submitVelocities(int seq, int zero, FullAtomList &a)
     else d[i] = a[i].velocity;
   }
   CollectVectorInstance *c;
-  if ( ( c = velocities.submitData(seq,aid,oRank,d) ) )
+  if ( ( c = velocities.submitData(seq,aid,oRank,d,prec) ) )
   {
       CProxy_ParallelIOMgr io(CkpvAccess(BOCclass_group).ioMgr);
       ParallelIOMgr *ioMgr = io.ckLocalBranch();
@@ -131,21 +131,45 @@ void CollectionMgr::submitVelocities(int seq, int zero, FullAtomList &a)
       for(int i=0; i<c->aid.size(); i++){
           perOList[c->outRank[i]].add(i);
       }    
-      CollectVectorVarMsg::DataStatus vstatus = CollectVectorVarMsg::VectorValid;
+      CollectVectorVarMsg::DataStatus vstatus;
+      if(prec==1){
+          vstatus = CollectVectorVarMsg::FloatVectorValid;
+      }else if(prec==2){
+          vstatus = CollectVectorVarMsg::VectorValid;
+      }else{
+          vstatus = CollectVectorVarMsg::BothValid;
+      }
       //send msg to output proc if there's one    
         for(int i=0; i<ioMgr->numOutputProcs; i++){
             int numAtoms = perOList[i].size();
             if(!numAtoms && ioMgr->numProxiesPerOutputProc == 0) continue;
             CollectVectorVarMsg *msg;            
-            msg = new(numAtoms, numAtoms, 0, 0)CollectVectorVarMsg;
+            if( vstatus == CollectVectorVarMsg::VectorValid){
+                msg = new(numAtoms, numAtoms, 0, 0)CollectVectorVarMsg;
+                for(int j=0; j<numAtoms; j++){
+                    int lIdx = perOList[i][j];
+                    msg->aid[j] = c->aid[lIdx];
+                    msg->data[j] = c->data[lIdx];
+                }
+            }else if(vstatus == CollectVectorVarMsg::FloatVectorValid){
+                msg = new(numAtoms, 0, numAtoms, 0)CollectVectorVarMsg;
+                for(int j=0; j<numAtoms; j++){
+                    int lIdx = perOList[i][j];
+                    msg->aid[j] = c->aid[lIdx];
+                    msg->fdata[j] = c->fdata[lIdx];
+                }
+            }else{
+                msg = new(numAtoms, numAtoms, numAtoms, 0)CollectVectorVarMsg;
+                for(int j=0; j<numAtoms; j++){
+                    int lIdx = perOList[i][j];
+                    msg->aid[j] = c->aid[lIdx];
+                    msg->data[j] = c->data[lIdx];
+                    msg->fdata[j] = c->fdata[lIdx];
+                }
+            }
             msg->seq = c->seq;
             msg->size = numAtoms;
             msg->status = vstatus;
-            for(int j=0; j<numAtoms; j++){
-                int lIdx = perOList[i][j];
-                msg->aid[j] = c->aid[lIdx];
-                msg->data[j] = c->data[lIdx];
-            }
             io[ioMgr->myOutputProxies[i]].receiveVelocities(msg);            
         }
         c->free();
@@ -153,7 +177,7 @@ void CollectionMgr::submitVelocities(int seq, int zero, FullAtomList &a)
   }
 }
 
-void CollectionMgr::submitForces(int seq, FullAtomList &a, int maxForceUsed, ForceList *f)
+void CollectionMgr::submitForces(int seq, FullAtomList &a, int maxForceUsed, ForceList *f, int prec)
 {
   int numAtoms = a.size();
   AtomIDList aid(numAtoms);
@@ -176,7 +200,7 @@ void CollectionMgr::submitForces(int seq, FullAtomList &a, int maxForceUsed, For
     }
   }
   CollectVectorInstance *c;
-  if ( ( c = forces.submitData(seq,aid,oRank,d) ) )
+  if ( ( c = forces.submitData(seq,aid,oRank,d,prec) ) )
   {
       CProxy_ParallelIOMgr io(CkpvAccess(BOCclass_group).ioMgr);
       ParallelIOMgr *ioMgr = io.ckLocalBranch();
@@ -186,21 +210,45 @@ void CollectionMgr::submitForces(int seq, FullAtomList &a, int maxForceUsed, For
       for(int i=0; i<c->aid.size(); i++){
           perOList[c->outRank[i]].add(i);
       }    
-      CollectVectorVarMsg::DataStatus vstatus = CollectVectorVarMsg::VectorValid;
+      CollectVectorVarMsg::DataStatus vstatus;
+      if(prec==1){
+          vstatus = CollectVectorVarMsg::FloatVectorValid;
+      }else if(prec==2){
+          vstatus = CollectVectorVarMsg::VectorValid;
+      }else{
+          vstatus = CollectVectorVarMsg::BothValid;
+      }
       //send msg to output proc if there's one    
         for(int i=0; i<ioMgr->numOutputProcs; i++){
             int numAtoms = perOList[i].size();
             if(!numAtoms && ioMgr->numProxiesPerOutputProc == 0) continue;
-            CollectVectorVarMsg *msg;            
-            msg = new(numAtoms, numAtoms, 0, 0)CollectVectorVarMsg;
+            CollectVectorVarMsg *msg;
+            if( vstatus == CollectVectorVarMsg::VectorValid){
+                msg = new(numAtoms, numAtoms, 0, 0)CollectVectorVarMsg;
+                for(int j=0; j<numAtoms; j++){
+                    int lIdx = perOList[i][j];
+                    msg->aid[j] = c->aid[lIdx];
+                    msg->data[j] = c->data[lIdx];
+                }
+            }else if(vstatus == CollectVectorVarMsg::FloatVectorValid){
+                msg = new(numAtoms, 0, numAtoms, 0)CollectVectorVarMsg;
+                for(int j=0; j<numAtoms; j++){
+                    int lIdx = perOList[i][j];
+                    msg->aid[j] = c->aid[lIdx];
+                    msg->fdata[j] = c->fdata[lIdx];
+                }
+            }else{
+                msg = new(numAtoms, numAtoms, numAtoms, 0)CollectVectorVarMsg;
+                for(int j=0; j<numAtoms; j++){
+                    int lIdx = perOList[i][j];
+                    msg->aid[j] = c->aid[lIdx];
+                    msg->data[j] = c->data[lIdx];
+                    msg->fdata[j] = c->fdata[lIdx];
+                }
+            }
             msg->seq = c->seq;
             msg->size = numAtoms;
             msg->status = vstatus;
-            for(int j=0; j<numAtoms; j++){
-                int lIdx = perOList[i][j];
-                msg->aid[j] = c->aid[lIdx];
-                msg->data[j] = c->data[lIdx];
-            }
             io[ioMgr->myOutputProxies[i]].receiveForces(msg);            
         }
         c->free();
@@ -252,7 +300,7 @@ void CollectionMgr::submitPositions(int seq, FullAtomList &a,
   }
 }
 
-void CollectionMgr::submitVelocities(int seq, int zero, FullAtomList &a)
+void CollectionMgr::submitVelocities(int seq, int zero, FullAtomList &a, int prec)
 {
   int numAtoms = a.size();
   AtomIDList aid(numAtoms);
@@ -263,17 +311,19 @@ void CollectionMgr::submitVelocities(int seq, int zero, FullAtomList &a)
     else d[i] = a[i].velocity;
   }
   CollectVectorInstance *c;
-  if ( ( c = velocities.submitData(seq,aid,d) ) )
+  if ( ( c = velocities.submitData(seq,aid,d,prec) ) )
   {
     int aid_size = c->aid.size();
     int data_size = c->data.size();
+    int fdata_size = c->fdata.size();
     CollectVectorMsg *msg = new (aid_size, data_size, 0, 0) CollectVectorMsg;
     msg->seq = c->seq;
     msg->aid_size = aid_size;
     msg->data_size = data_size;
-    msg->fdata_size = 0;
+    msg->fdata_size = fdata_size;
     memcpy(msg->aid,c->aid.begin(),aid_size*sizeof(AtomID));
     memcpy(msg->data,c->data.begin(),data_size*sizeof(Vector));
+    memcpy(msg->fdata,c->fdata.begin(),fdata_size*sizeof(FloatVector));
 #ifdef NODEGROUP_FORCE_REGISTER
     if (Node::Object()->simParameters->CUDASOAintegrate) {
       CProxy_PatchData cpdata(CkpvAccess(BOCclass_group).patchData);
@@ -292,7 +342,7 @@ void CollectionMgr::submitVelocities(int seq, int zero, FullAtomList &a)
   }
 }
  
-void CollectionMgr::submitForces(int seq, FullAtomList &a, int maxForceUsed, ForceList *f)
+void CollectionMgr::submitForces(int seq, FullAtomList &a, int maxForceUsed, ForceList *f, int prec)
 {
   int numAtoms = a.size();
   AtomIDList aid(numAtoms);
@@ -313,17 +363,19 @@ void CollectionMgr::submitForces(int seq, FullAtomList &a, int maxForceUsed, For
     }
   }
   CollectVectorInstance *c;
-  if ( ( c = forces.submitData(seq,aid,d) ) )
+  if ( ( c = forces.submitData(seq,aid,d,prec) ) )
   {
     int aid_size = c->aid.size();
     int data_size = c->data.size();
+    int fdata_size = c->fdata.size();
     CollectVectorMsg *msg = new (aid_size, data_size, 0, 0) CollectVectorMsg;
     msg->seq = c->seq;
     msg->aid_size = aid_size;
     msg->data_size = data_size;
-    msg->fdata_size = 0;
+    msg->fdata_size = fdata_size;
     memcpy(msg->aid,c->aid.begin(),aid_size*sizeof(AtomID));
     memcpy(msg->data,c->data.begin(),data_size*sizeof(Vector));
+    memcpy(msg->fdata,c->fdata.begin(),fdata_size*sizeof(FloatVector));
 #ifdef NODEGROUP_FORCE_REGISTER
     if (Node::Object()->simParameters->CUDASOAintegrate) {
       CProxy_PatchData cpdata(CkpvAccess(BOCclass_group).patchData);

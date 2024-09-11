@@ -29,8 +29,12 @@ public:
 
   // gather_* are called by Controller with the current timesteps and
   // energies.
+  void gather_time(IMDTime *time);
+  void gather_box(int timestep, IMDBox *box);
   void gather_energies(IMDEnergies *energies); 
   void gather_coordinates(int timestep, int N, FloatVector *coords);
+  void gather_velocities(int timestep, int N, FloatVector *velocities);
+  void gather_forces(int timestep, int N, FloatVector *forces);
 
   // called by GlobalMasterIMD to set the transfer rate.  Should probably
   // be handled internally by GlobalMasterIMD instead.

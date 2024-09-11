@@ -21,6 +21,9 @@
 #define MIN_DEBUG_LEVEL 1
 #include "Debug.h"
 
+#define IMDv2 2
+#define IMDv3 3
+
 struct vmdforce {
   int index;
   Vector force;
@@ -54,9 +57,11 @@ GlobalMasterIMD::GlobalMasterIMD() {
   DebugM(3,"Constructing\n");
   SimParameters *simparams = Node::Object()->simParameters;
   int port = simparams->IMDport;
+  IMDversion = simparams->IMDversion;
   IMDwait = simparams->IMDwait;
   IMDignore = simparams->IMDignore;
   IMDignoreForces = simparams->IMDignoreForces;
+  IMDsendsettings = simparams->IMDsendsettings;
   coordtmp = NULL;
   coordtmpsize = 0;
 
@@ -89,10 +94,18 @@ GlobalMasterIMD::~GlobalMasterIMD() {
   delete [] coordtmp;
 }
 
-static int my_imd_connect(void *s) {
-  if (imd_handshake(s)) {
+static int my_imd_connect(void *s, const int IMDversion, const IMDSessionInfo *sessionInfo) {
+  if (imd_handshake(s, IMDversion)) {
     iout << iWARN << "IMD handshake failed\n" << endi;
     return 0;
+  }
+
+  if (IMDversion == IMDv3) {
+    iout << iWARN << "IMD protocol version 3 detected\n" << endi;
+    if (imd_sessioninfo(s, sessionInfo)) {
+      iout << iWARN << "IMD sessioninfo not received\n" << endi;
+      return 0;
+    }
   }
 
   // Wait a second, then see if VMD has responded.
@@ -127,7 +140,7 @@ void GlobalMasterIMD::calculate() {
     if (!clientsock) {
       iout << iWARN << "IMD socket accept failed\n" << endi;
     } else {
-      if (!my_imd_connect(clientsock)) {
+      if (!my_imd_connect(clientsock, IMDversion, &IMDsendsettings)) {
         iout << iWARN << "IMD connection failed\n" << endi;
         vmdsock_destroy(clientsock);
       } else {
@@ -247,16 +260,33 @@ void GlobalMasterIMD::get_vmd_forces() {
             iout << iWARN << "Ignoring IMD pause due to IMDignore\n" << endi;
             break;
           }
+          if (IMDversion == IMDv2) {
+            if ( paused ) {
+              iout << iINFO << "Resuming IMD\n" << endi;
+              IMDwait = Node::Object()->simParameters->IMDwait;
+            }
+            paused = ! paused;
+            if ( paused ) {
+              iout << iINFO << "Pausing IMD\n" << endi;
+              IMDwait = 1;
+            }
+          } else if (IMDversion == IMDv3) {
+            if ( paused ) {
+              iout << iINFO << "Already paused\n" << endi;
+            }
+            if ( ! paused ) {
+              iout << iINFO << "Pausing IMD\n" << endi;
+              IMDwait = 1;
+              paused = ! paused;
+            }
+          }
+          break;
+        case IMD_RESUME:
           if ( paused ) {
             iout << iINFO << "Resuming IMD\n" << endi;
             IMDwait = Node::Object()->simParameters->IMDwait;
           }
           paused = ! paused;
-          if ( paused ) {
-            iout << iINFO << "Pausing IMD\n" << endi;
-            IMDwait = 1;
-          }
-          break;
         case IMD_IOERROR:
           iout << iWARN << "IMD connection lost\n" << endi;
         case IMD_DISCONNECT:
@@ -317,5 +347,65 @@ void GlobalMasterIMD::send_fcoords(int N, FloatVector *coords) {
       } 
       imd_send_fcoords(clientsock, N, coordtmp);
     }
+  }
+}
+
+void GlobalMasterIMD::send_velocities(int N, FloatVector *velocities) {
+  for (int i=0; i<clients.size(); i++) {
+    void *clientsock = clients[i];
+    if (!clientsock || !vmdsock_selwrite(clientsock,0)) continue;
+    if (sizeof(FloatVector) == 3*sizeof(float)) {
+      imd_send_velocities(clientsock, N, (float *)velocities);
+    } else {
+      if (veltmpsize < N) {
+        delete [] veltmp;
+        veltmp = new float[3*N];
+        veltmpsize = N;
+      }
+      for (int i=0; i<N; i++) {
+        veltmp[3*i] = velocities[i].x; 
+        veltmp[3*i+1] = velocities[i].y; 
+        veltmp[3*i+2] = velocities[i].z; 
+      } 
+      imd_send_velocities(clientsock, N, veltmp);
+    }
+  }
+}
+
+void GlobalMasterIMD::send_forces(int N, FloatVector *forces) {
+  for (int i=0; i<clients.size(); i++) {
+    void *clientsock = clients[i];
+    if (!clientsock || !vmdsock_selwrite(clientsock,0)) continue;
+    if (sizeof(FloatVector) == 3*sizeof(float)) {
+      imd_send_forces(clientsock, N, (float *)forces);
+    } else {
+      if (forcetmpsize < N) {
+        delete [] forcetmp;
+        forcetmp = new float[3*N];
+        forcetmpsize = N;
+      }
+      for (int i=0; i<N; i++) {
+        forcetmp[3*i] = forces[i].x; 
+        forcetmp[3*i+1] = forces[i].y; 
+        forcetmp[3*i+2] = forces[i].z; 
+      } 
+      imd_send_forces(clientsock, N, forcetmp);
+    }
+  }
+}
+
+void GlobalMasterIMD::send_box(IMDBox *box) {
+  for (int i=0; i<clients.size(); i++) {
+    void *clientsock = clients[i];
+    if (!clientsock || !vmdsock_selwrite(clientsock,0)) continue;
+    imd_send_box(clientsock, box);
+  }
+}
+
+void GlobalMasterIMD::send_time(IMDTime *time) {
+  for (int i=0; i<clients.size(); i++) {
+    void *clientsock = clients[i];
+    if (!clientsock || !vmdsock_selwrite(clientsock,0)) continue;
+    imd_send_time(clientsock, time);
   }
 }

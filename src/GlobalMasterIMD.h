@@ -21,6 +21,10 @@ class GlobalMasterIMD : public GlobalMaster {
 
   void send_energies(IMDEnergies *);
   void send_fcoords(int, FloatVector *);
+  void send_velocities(int, FloatVector *);
+  void send_forces(int, FloatVector *);
+  void send_box(IMDBox *);
+  void send_time(IMDTime *);
 
  protected:
 
@@ -31,6 +35,9 @@ class GlobalMasterIMD : public GlobalMaster {
   // Simple function for getting MDComm-style forces from VMD
   void get_vmd_forces();
 
+  // IMD protocol version
+  int IMDversion;
+
   // flag for whether to proceed with simulation when there are no connections
   int IMDwait;
 
@@ -39,6 +46,9 @@ class GlobalMasterIMD : public GlobalMaster {
 
   // flag for whether to ignore only forces
   int IMDignoreForces;
+
+  // IMD session info i.e. send settings
+  IMDSessionInfo IMDsendsettings;
 
   // My server socket handle
   void *sock;
@@ -49,6 +59,12 @@ class GlobalMasterIMD : public GlobalMaster {
   // temporaries in case 3*sizeof(float) != sizeof(FloatVector)
   float *coordtmp;
   int coordtmpsize;
+
+  float *veltmp;
+  int veltmpsize;
+
+  float *forcetmp;
+  int forcetmpsize;
 };
 
 #endif

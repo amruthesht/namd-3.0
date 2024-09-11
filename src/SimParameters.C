@@ -105,6 +105,8 @@ extern int avxTilesCommandLineDisable;
 
 #define XXXBIGREAL 1.0e32
 
+#define IMDv3 3 
+
 
 char* SimParameters::getfromparseopts(const char* name, char *outbuf) {
   if ( parseopts ) return parseopts->getfromptr(name,outbuf);
@@ -2448,6 +2450,8 @@ void SimParameters::config_parser_misc(ParseOptions &opts) {
 
    // IMD options
    opts.optionalB("main","IMDon","Connect using IMD?",&IMDon, FALSE);
+   opts.optional("IMDon","IMDversion","IMD protocol version number",&IMDversion,2);
+   opts.range("IMDversion",POSITIVE);
    opts.require("IMDon","IMDport", "Port to which to bind", &IMDport);
    opts.range("IMDport",POSITIVE);
    opts.require("IMDon","IMDfreq", "Frequency at which to report", &IMDfreq);
@@ -2457,6 +2461,20 @@ void SimParameters::config_parser_misc(ParseOptions &opts) {
    opts.optionalB("IMDon","IMDignore","Ignore any user input?",&IMDignore,
      FALSE);
    opts.optionalB("IMDon","IMDignoreForces","Ignore forces ONLY?",&IMDignoreForces,
+     FALSE);
+   opts.optionalB("IMDon","IMDsendTime","Send time information",&IMDsendsettings.time_switch,
+     FALSE);
+   opts.optionalB("IMDon","IMDsendBoxDimensions","Send box dimensions via IMD:",&IMDsendsettings.box_switch,
+     FALSE);
+   opts.optionalB("IMDon","IMDsendPositions","Send positions via IMD:",&IMDsendsettings.fcoords_switch,
+     FALSE);
+   opts.optionalB("IMDon","IMDwrapPositions","Send positions as wrapped:",&IMDsendsettings.wrap_switch,
+     FALSE);
+   opts.optionalB("IMDon","IMDsendVelocities","Send velocities via IMD:",&IMDsendsettings.velocities_switch,
+     FALSE);
+   opts.optionalB("IMDon","IMDsendForces","Send forces via IMD:",&IMDsendsettings.forces_switch,
+     FALSE);
+   opts.optionalB("IMDon","IMDsendEnergies","Send energies via IMD:",&IMDsendsettings.energies_switch,
      FALSE);
    // Maximum Partition options
    opts.optional("ldBalancer", "maxSelfPart", 
@@ -6227,6 +6245,7 @@ if ( openatomOn )
    if (IMDon)
    {
      iout << iINFO << "INTERACTIVE MD ACTIVE\n";
+     iout << iINFO << "INTERACTIVE MD VERSION    " << IMDversion << "\n";
      iout << iINFO << "INTERACTIVE MD PORT    " << IMDport << "\n";
      iout << iINFO << "INTERACTIVE MD FREQ    " << IMDfreq << "\n";
      if (IMDignore) {
@@ -6238,6 +6257,31 @@ if ( openatomOn )
             iout << iINFO << "PAUSE, RESUME, DETACH AND FINISH INTERACTIVE MD ARE ENABLED\n";
          }
        if (IMDwait) iout << iINFO << "WILL AWAIT INTERACTIVE MD CONNECTION\n";
+     }
+     if (IMDversion == IMDv3) {
+        iout << iINFO << "INTERACTIVE MD WILL SEND THE FOLLOWING:\n";
+        if (IMDsendsettings.time_switch == 1) {
+            iout << iINFO << "TIME\n";
+        }
+        if (IMDsendsettings.box_switch == 1) {
+            iout << iINFO << "BOX DIMENSIONS\n";
+        }
+        if (IMDsendsettings.fcoords_switch == 1) {
+          if (IMDsendsettings.wrap_switch == 1) {
+            iout << iINFO << "WRAPPED COORDINATES\n";
+          } else {
+            iout << iINFO << "UNWRAPPED COORDINATES\n";
+          }
+        }
+        if (IMDsendsettings.velocities_switch == 1) {
+            iout << iINFO << "VELOCITIES\n";
+        }
+        if (IMDsendsettings.forces_switch == 1) {
+            iout << iINFO << "FORCES\n";
+        }
+        if (IMDsendsettings.energies_switch == 1) {
+            iout << iINFO << "ENERGIES\n";
+        }
      }
      iout << endi;
    }

@@ -56,6 +56,9 @@
 #define O_LARGEFILE 0x0
 #endif
 
+#define IMDv2 2
+#define IMDv3 3
+
 // same as open, only does error checking internally
 int NAMD_open(const char *fname) {
   int fd;
@@ -218,7 +221,9 @@ int Output::coordinateNeeded(int timestep)
     //  Iteractive MD
     if ( simParams->IMDon &&
        ( ((timestep % simParams->IMDfreq) == 0) ||
-         (timestep == simParams->firstTimestep) ) )
+         (timestep == simParams->firstTimestep) ) &&
+         ((simParams->IMDversion == IMDv2) || ((simParams->IMDversion == IMDv3) 
+         && (simParams->IMDsendsettings.fcoords_switch == 1))) )
       { positionsNeeded |= 1; }
 
   }
@@ -275,7 +280,7 @@ void wrap_coor(FloatVector *coor, Lattice &lattice, float *done) {
 };
 
 void Output::coordinate(int timestep, int n, Vector *coor, FloatVector *fcoor,
-							Lattice &lattice)
+							Lattice &lattice, BigReal &dt)
 {
   SimParameters *simParams = Node::Object()->simParameters;
   double coor_wrapped = 0;
@@ -309,6 +314,51 @@ void Output::coordinate(int timestep, int n, Vector *coor, FloatVector *fcoor,
        ( ((timestep % simParams->IMDfreq) == 0) ||
          (timestep == simParams->firstTimestep) ) )
     {
+    if ((simParams->IMDversion == IMDv2) || ((simParams->IMDversion == IMDv3) 
+         && (simParams->IMDsendsettings.time_switch == 1)))
+    {
+      IMDOutput *imd = NULL;
+#ifdef NODEGROUP_FORCE_REGISTER
+      if (simParams->CUDASOAintegrate) {
+        CProxy_PatchData cpdata(CkpvAccess(BOCclass_group).patchData);
+        imd = cpdata.ckLocalBranch()->imd;
+      }
+      else
+#endif
+      {
+        imd = Node::Object()->imd;
+      }
+      
+      IMDTime time = {timestep, dt};
+
+      if (imd != NULL) imd->gather_time(&time);
+    }
+
+    if ((simParams->IMDversion == IMDv2) || ((simParams->IMDversion == IMDv3) 
+         && (simParams->IMDsendsettings.box_switch == 1)))
+    {
+      IMDOutput *imd = NULL;
+#ifdef NODEGROUP_FORCE_REGISTER
+      if (simParams->CUDASOAintegrate) {
+        CProxy_PatchData cpdata(CkpvAccess(BOCclass_group).patchData);
+        imd = cpdata.ckLocalBranch()->imd;
+      }
+      else
+#endif
+      {
+        imd = Node::Object()->imd;
+      }
+
+      IMDBox box = {lattice.a().x, lattice.a().y, lattice.a().z,
+                    lattice.b().x, lattice.b().y, lattice.b().z,
+                    lattice.c().x, lattice.c().y, lattice.c().z};
+
+      if (imd != NULL) imd->gather_box(timestep, &box);
+    }
+
+    if ((simParams->IMDversion == IMDv2) || ((simParams->IMDversion == IMDv3) 
+         && (simParams->IMDsendsettings.fcoords_switch == 1)))
+    {
       IMDOutput *imd = NULL;
 #ifdef NODEGROUP_FORCE_REGISTER
       if (simParams->CUDASOAintegrate) {
@@ -322,6 +372,8 @@ void Output::coordinate(int timestep, int n, Vector *coor, FloatVector *fcoor,
       }
       wrap_coor(fcoor,lattice,&fcoor_wrapped);
       if (imd != NULL) imd->gather_coordinates(timestep, n, fcoor);
+    }
+    
     }
 
   }
@@ -392,6 +444,14 @@ int Output::velocityNeeded(int timestep)
        ((timestep % simParams->restartFrequency) == 0) )
       { velocitiesNeeded |= 2; }
 
+    //  Interactive MD
+    if ( simParams->IMDon &&
+       ( ((timestep % simParams->IMDfreq) == 0) ||
+         (timestep == simParams->firstTimestep) ) &&
+         ((simParams->IMDversion == IMDv2) || ((simParams->IMDversion == IMDv3) 
+         && (simParams->IMDsendsettings.velocities_switch == 1))) )
+      { velocitiesNeeded |= 1; }
+
   }
 
   //  Output final velocities
@@ -403,7 +463,7 @@ int Output::velocityNeeded(int timestep)
   return velocitiesNeeded;
 }
 
-void Output::velocity(int timestep, int n, Vector *vel)
+void Output::velocity(int timestep, int n, Vector *vel, FloatVector *fvel)
 {
   SimParameters *simParams = Node::Object()->simParameters;
 
@@ -413,7 +473,7 @@ void Output::velocity(int timestep, int n, Vector *vel)
     if ( simParams->velDcdFrequency &&
        ((timestep % simParams->velDcdFrequency) == 0) )
     {
-      output_veldcdfile(timestep, n, vel);
+      output_veldcdfile(timestep, n, fvel);
     }
 
   //  Output restart file
@@ -425,6 +485,27 @@ void Output::velocity(int timestep, int n, Vector *vel)
       output_restart_velocities(timestep, n, vel);
       iout << "FINISHED WRITING RESTART VELOCITIES\n" <<endi;
       fflush(stdout);
+    }
+
+    //  Interactive MD
+    if ( simParams->IMDon &&
+       ( ((timestep % simParams->IMDfreq) == 0) ||
+         (timestep == simParams->firstTimestep) ) &&
+         ((simParams->IMDversion == IMDv2) || ((simParams->IMDversion == IMDv3) 
+         && (simParams->IMDsendsettings.velocities_switch == 1))) )
+    {
+      IMDOutput *imd = NULL;
+#ifdef NODEGROUP_FORCE_REGISTER
+      if (simParams->CUDASOAintegrate) {
+        CProxy_PatchData cpdata(CkpvAccess(BOCclass_group).patchData);
+        imd = cpdata.ckLocalBranch()->imd;
+      }
+      else
+#endif
+      {
+        imd = Node::Object()->imd;
+      }
+      if (imd != NULL) imd->gather_velocities(timestep, n, fvel);
     }
 
   }
@@ -482,6 +563,14 @@ int Output::forceNeeded(int timestep)
        ((timestep % simParams->forceDcdFrequency) == 0) )
       { forcesNeeded |= 1; }
 
+    //  Iteractive MD
+    if ( simParams->IMDon &&
+       ( ((timestep % simParams->IMDfreq) == 0) ||
+         (timestep == simParams->firstTimestep) ) &&
+         ((simParams->IMDversion == IMDv2) || ((simParams->IMDversion == IMDv3) 
+         && (simParams->IMDsendsettings.forces_switch == 1))) )
+      { forcesNeeded |= 1; }
+
   }
 
   //  Output forces
@@ -493,7 +582,7 @@ int Output::forceNeeded(int timestep)
   return forcesNeeded;
 }
 
-void Output::force(int timestep, int n, Vector *frc)
+void Output::force(int timestep, int n, Vector *frc, FloatVector *ffrc)
 {
   SimParameters *simParams = Node::Object()->simParameters;
 
@@ -503,7 +592,28 @@ void Output::force(int timestep, int n, Vector *frc)
     if ( simParams->forceDcdFrequency &&
        ((timestep % simParams->forceDcdFrequency) == 0) )
     {
-      output_forcedcdfile(timestep, n, frc);
+      output_forcedcdfile(timestep, n, ffrc);
+    }
+
+    //  Interactive MD
+    if ( simParams->IMDon &&
+       ( ((timestep % simParams->IMDfreq) == 0) ||
+         (timestep == simParams->firstTimestep) ) &&
+         ((simParams->IMDversion == IMDv2) || ((simParams->IMDversion == IMDv3) 
+         && (simParams->IMDsendsettings.forces_switch == 1))) )
+    {
+      IMDOutput *imd = NULL;
+#ifdef NODEGROUP_FORCE_REGISTER
+      if (simParams->CUDASOAintegrate) {
+        CProxy_PatchData cpdata(CkpvAccess(BOCclass_group).patchData);
+        imd = cpdata.ckLocalBranch()->imd;
+      }
+      else
+#endif
+      {
+        imd = Node::Object()->imd;
+      }
+      if (imd != NULL) imd->gather_forces(timestep, n, ffrc);
     }
 
   }
@@ -1070,7 +1180,7 @@ void Output::output_final_velocities(int timestep, int n, Vector *vel)
 /*                  */
 /************************************************************************/
 
-void Output::output_veldcdfile(int timestep, int n, Vector *vel)
+void Output::output_veldcdfile(int timestep, int n, FloatVector *vel)
 
 {
   static Bool first=TRUE;  //  Flag indicating first call
@@ -1244,7 +1354,7 @@ void Output::output_forces(int timestep, int n, Vector *frc)
 /*                  */
 /************************************************************************/
 
-void Output::output_forcedcdfile(int timestep, int n, Vector *frc)
+void Output::output_forcedcdfile(int timestep, int n, FloatVector *frc)
 
 {
   static Bool first=TRUE;  //  Flag indicating first call

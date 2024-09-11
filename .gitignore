@@ -1,0 +1,8 @@
+# Project-level ignore patterns
+
+# Ignore dependencies
+fftw*
+tcl*
+
+# Ignore build artifacts
+Linux-x86_64*

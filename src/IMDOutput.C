@@ -35,3 +35,33 @@ void IMDOutput::gather_coordinates(int timestep, int N, FloatVector *coords) {
   imd->send_fcoords(N, coords);
 }
 
+void IMDOutput::gather_velocities(int timestep, int N, FloatVector *velocities) {
+  if ( ignore ) {
+    imd->step = timestep;
+    imd->calculate();
+  }
+  if (!imd || timestep % transrate) return;
+  imd->send_velocities(N, velocities);
+}
+
+void IMDOutput::gather_forces(int timestep, int N, FloatVector *forces) {
+  if ( ignore ) {
+    imd->step = timestep;
+    imd->calculate();
+  }
+  if (!imd || timestep % transrate) return;
+  imd->send_forces(N, forces);
+}
+
+void IMDOutput::gather_box(int timestep, IMDBox *box) {
+  if (!imd || timestep % transrate) return;
+  imd->send_box(box);
+}
+
+void IMDOutput::gather_time(IMDTime *time) {
+  if (!imd || time->tstep % transrate) return;
+  imd->send_time(time);
+}
+
+
+

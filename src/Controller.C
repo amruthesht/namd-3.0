@@ -4308,7 +4308,8 @@ void Controller::printEnergies(int step, int minimize)
 
     // ONLY OUTPUT SHOULD OCCUR BELOW THIS LINE!!!
 
-    if (simParams->IMDon && !(step % simParams->IMDfreq)) {
+    if (simParams->IMDon && !(step % simParams->IMDfreq) && ((simParams->IMDversion == 2) || 
+        ((simParams->IMDversion == 3) && (simParams->IMDsendsettings.energies_switch == 1)))) {
       IMDEnergies energies;
       energies.tstep = step;
       energies.T = temp_avg/avg_count;
@@ -4633,7 +4634,7 @@ void Controller::writeExtendedSystemData(int step, ofstream_namd &file) {
 void Controller::enqueueCollections(int timestep)
 {
   if ( Output::coordinateNeeded(timestep) ){
-    collection->enqueuePositions(timestep,state->lattice);
+    collection->enqueuePositions(timestep,simParams->dt,state->lattice);
   }
   if ( Output::velocityNeeded(timestep) )
     collection->enqueueVelocities(timestep);

@@ -12,7 +12,8 @@ typedef struct {
 } IMDheader;
 
 #define HEADERSIZE 8
-#define IMDVERSION 2
+#define IMDv2 2
+#define IMDv3 3
 
 static void swap4(char *data, int ndata) {
   int i;
@@ -123,17 +124,17 @@ int imd_kill(void *s) {
   return (imd_writen(s, (char *)&header, HEADERSIZE) != HEADERSIZE);
 }
 
-static int imd_go(void *s) {
+int imd_go(void *s) {
   IMDheader header;
   fill_header(&header, IMD_GO, 0);
   return (imd_writen(s, (char *)&header, HEADERSIZE) != HEADERSIZE);
 }
 
 
-int imd_handshake(void *s) {
+int imd_handshake(void *s, const int IMDVersion) {
   IMDheader header;
   fill_header(&header, IMD_HANDSHAKE, 1);
-  header.length = IMDVERSION;   // Not byteswapped!
+  header.length = IMDVersion;   // Not byteswapped!
   return (imd_writen(s, (char *)&header, HEADERSIZE) != HEADERSIZE);
 }
 
@@ -144,6 +145,20 @@ int imd_trate(void *s, int32 rate) {
 }
 
 // Data methods
+
+template <typename Type>
+int imd_sessioninfo(void *s, const IMDSessionInfo *info) {
+  std::vector<Type> infoData = info->toTypeVector<Type>();
+  int32 size = HEADERSIZE+infoData.size()*sizeof(Type);
+  char *buf = new char[size];
+  fill_header((IMDheader *)buf, IMD_SESSIONINFO, static_cast<int32>(infoData.size()));
+  memcpy((void *)(buf+HEADERSIZE), (const void *)(infoData.data()), infoData.size()*sizeof(Type));
+  int rc = (imd_writen(s, buf, size) != size);
+  delete [] buf;
+  return rc;
+}
+
+template int imd_sessioninfo<char>(void *s, const IMDSessionInfo *info);
 
 int imd_send_mdcomm(void *s,int32 n,const int32 *indices,const float *forces) {
   int32 size = HEADERSIZE+16*n;
@@ -176,6 +191,45 @@ int imd_send_fcoords(void *s, int32 n, const float *coords) {
   return rc;
 }
 
+int imd_send_velocities(void *s, int32 n, const float *vels) {
+  int32 size = HEADERSIZE+3*n*sizeof(float);
+  char *buf = new char[size];
+  fill_header((IMDheader *)buf, IMD_VELOCITIES, n);
+  memcpy((void *)(buf+HEADERSIZE), (const void *)vels, 12*n);
+  int rc = (imd_writen(s, buf, size) != size);
+  delete [] buf;
+  return rc;
+}
+
+int imd_send_forces(void *s, int32 n, const float *forces) {
+  int32 size = HEADERSIZE+3*n*sizeof(float);
+  char *buf = new char[size];
+  fill_header((IMDheader *)buf, IMD_FORCES, n);
+  memcpy((void *)(buf+HEADERSIZE), (const void *)forces, 12*n);
+  int rc = (imd_writen(s, buf, size) != size);
+  delete [] buf;
+  return rc;
+}
+
+int imd_send_box(void *s, const IMDBox *box) {
+  int32 size = HEADERSIZE+sizeof(IMDBox);
+  char *buf = new char[size];
+  fill_header((IMDheader *)buf, IMD_BOX, 1);
+  memcpy((void *)(buf+HEADERSIZE), (const void *)box, sizeof(IMDBox));
+  int rc = (imd_writen(s, buf, size) != size);
+  delete [] buf;
+  return rc;
+}
+
+int imd_send_time(void *s, const IMDTime *time) {
+  int32 size = HEADERSIZE+sizeof(IMDTime);
+  char *buf = new char[size];
+  fill_header((IMDheader *)buf, IMD_TIME, 1);
+  memcpy((void *)(buf+HEADERSIZE), (const void *)time, sizeof(IMDTime));
+  int rc = (imd_writen(s, buf, size) != size);
+  delete [] buf;
+  return rc;
+}
 // The IMD receive functions
 
 // The IMD receive functions
@@ -198,12 +252,12 @@ int imd_recv_handshake(void *s) {
   if (type != IMD_HANDSHAKE) return -1;
 
   // Check its endianness, as well as the IMD version.
-  if (buf == IMDVERSION) {
+  if (buf == IMDv2) {
     if (!imd_go(s)) return 0;
     return -1;
   }
   swap4((char *)&buf, 4);
-  if (buf == IMDVERSION) {
+  if (buf == IMDv2) {
     if (!imd_go(s)) return 1;
   }
   
@@ -235,5 +289,21 @@ int imd_recv_energies(void *s, IMDEnergies *energies) {
 
 int imd_recv_fcoords(void *s, int32 n, float *coords) {
   return (imd_readn(s, (char *)coords, 12*n) != 12*n);
+}
+
+int imd_recv_velocities(void *s, int32 n, float *vels) {
+  return (imd_readn(s, (char *)vels, 12*n) != 12*n);
+}
+
+int imd_recv_forces(void *s, int32 n, float *forces) {
+  return (imd_readn(s, (char *)forces, 12*n) != 12*n);
+}
+
+int imd_recv_box(void *s, IMDBox *box) {
+  return (imd_readn(s, (char *)box, sizeof(IMDBox)) != sizeof(IMDBox));
+}
+
+int imd_recv_time(void *s, IMDTime *time) {
+  return (imd_readn(s, (char *)time, sizeof(IMDTime)) != sizeof(IMDTime));
 }
 

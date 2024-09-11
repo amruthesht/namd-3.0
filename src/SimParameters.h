@@ -17,6 +17,7 @@
 #include "common.h"
 #include "Vector.h"
 #include "Lattice.h"
+#include "imd.h"
 
 #include "MGridforceParams.h"
 #include "GroupRestraintsParam.h"
@@ -1044,6 +1045,7 @@ public:
 
 	// IMD parameters
 	int IMDon;    // enable IMD
+        int IMDversion;  // version of IMD protocol
 	int IMDport;  // port on which to listen for connections
  	int IMDfreq;  // frequency at which coordinates will be available
         int IMDwait;  // if true, pause the simulation when there is no
@@ -1051,6 +1053,8 @@ public:
  	int IMDignore;  // IMD connection does not influence simulation
                         // only sends coordinates and energies to VMD
  	int IMDignoreForces;  // Only the Forces are ignored. Finish, Pause and Resume are enabled
+        IMDSessionInfo IMDsendsettings = {0,0,1,1,0,0,1}; // information about the current session for sending via IMD
+        // default value is for v2.0
                 	
         
         // AMBER options

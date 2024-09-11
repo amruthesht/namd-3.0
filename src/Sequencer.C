@@ -3034,12 +3034,12 @@ void Sequencer::submitCollections_SOA(int step, int zeroVel /* = 0 */)
     collection->submitPositions(step,patch->atom,patch->lattice,is_pos_needed);
   }
   if ( is_vel_needed ) {
-    collection->submitVelocities(step,zeroVel,patch->atom);
+    collection->submitVelocities(step,zeroVel,patch->atom,is_vel_needed);
   }
   if ( is_f_needed ) {
     int maxForceUsed = patch->flags.maxForceUsed;
     if ( maxForceUsed > Results::slow ) maxForceUsed = Results::slow;
-    collection->submitForces(step,patch->atom,maxForceUsed,patch->f);
+    collection->submitForces(step,patch->atom,maxForceUsed,patch->f,is_f_needed);
   }
 }
 
@@ -6194,12 +6194,12 @@ void Sequencer::submitCollections(int step, int zeroVel)
     collection->submitPositions(step,patch->atom,patch->lattice,prec);
   }
   if ( Output::velocityNeeded(step) ) {
-    collection->submitVelocities(step,zeroVel,patch->atom);
+    collection->submitVelocities(step,zeroVel,patch->atom,prec);
   }
   if ( Output::forceNeeded(step) ) {
     int maxForceUsed = patch->flags.maxForceUsed;
     if ( maxForceUsed > Results::slow ) maxForceUsed = Results::slow;
-    collection->submitForces(step,patch->atom,maxForceUsed,patch->f);
+    collection->submitForces(step,patch->atom,maxForceUsed,patch->f,prec);
   }
 }
 
