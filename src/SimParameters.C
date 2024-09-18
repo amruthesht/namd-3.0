@@ -2467,15 +2467,15 @@ void SimParameters::config_parser_misc(ParseOptions &opts) {
    opts.optionalB("IMDon","IMDsendBoxDimensions","Send box dimensions via IMD:",&IMDsendsettings.box_switch,
      FALSE);
    opts.optionalB("IMDon","IMDsendPositions","Send positions via IMD:",&IMDsendsettings.fcoords_switch,
-     FALSE);
+     TRUE);
    opts.optionalB("IMDon","IMDwrapPositions","Send positions as wrapped:",&IMDsendsettings.wrap_switch,
-     FALSE);
+     TRUE);
    opts.optionalB("IMDon","IMDsendVelocities","Send velocities via IMD:",&IMDsendsettings.velocities_switch,
      FALSE);
    opts.optionalB("IMDon","IMDsendForces","Send forces via IMD:",&IMDsendsettings.forces_switch,
      FALSE);
    opts.optionalB("IMDon","IMDsendEnergies","Send energies via IMD:",&IMDsendsettings.energies_switch,
-     FALSE);
+     TRUE);
    // Maximum Partition options
    opts.optional("ldBalancer", "maxSelfPart", 
      "maximum number of self partitions in one patch", &maxSelfPart, 20);

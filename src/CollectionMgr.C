@@ -316,7 +316,7 @@ void CollectionMgr::submitVelocities(int seq, int zero, FullAtomList &a, int pre
     int aid_size = c->aid.size();
     int data_size = c->data.size();
     int fdata_size = c->fdata.size();
-    CollectVectorMsg *msg = new (aid_size, data_size, 0, 0) CollectVectorMsg;
+    CollectVectorMsg *msg = new (aid_size, data_size, fdata_size, 0) CollectVectorMsg;
     msg->seq = c->seq;
     msg->aid_size = aid_size;
     msg->data_size = data_size;
@@ -368,7 +368,7 @@ void CollectionMgr::submitForces(int seq, FullAtomList &a, int maxForceUsed, For
     int aid_size = c->aid.size();
     int data_size = c->data.size();
     int fdata_size = c->fdata.size();
-    CollectVectorMsg *msg = new (aid_size, data_size, 0, 0) CollectVectorMsg;
+    CollectVectorMsg *msg = new (aid_size, data_size, fdata_size, 0) CollectVectorMsg;
     msg->seq = c->seq;
     msg->aid_size = aid_size;
     msg->data_size = data_size;

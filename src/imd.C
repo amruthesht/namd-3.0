@@ -195,7 +195,7 @@ int imd_send_velocities(void *s, int32 n, const float *vels) {
   int32 size = HEADERSIZE+3*n*sizeof(float);
   char *buf = new char[size];
   fill_header((IMDheader *)buf, IMD_VELOCITIES, n);
-  memcpy((void *)(buf+HEADERSIZE), (const void *)vels, 12*n);
+  memcpy((void *)(buf+HEADERSIZE), (const void *)vels, 3*n*sizeof(float));
   int rc = (imd_writen(s, buf, size) != size);
   delete [] buf;
   return rc;
@@ -205,7 +205,7 @@ int imd_send_forces(void *s, int32 n, const float *forces) {
   int32 size = HEADERSIZE+3*n*sizeof(float);
   char *buf = new char[size];
   fill_header((IMDheader *)buf, IMD_FORCES, n);
-  memcpy((void *)(buf+HEADERSIZE), (const void *)forces, 12*n);
+  memcpy((void *)(buf+HEADERSIZE), (const void *)forces, 3*n*sizeof(float));
   int rc = (imd_writen(s, buf, size) != size);
   delete [] buf;
   return rc;

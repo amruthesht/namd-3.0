@@ -6193,10 +6193,12 @@ void Sequencer::submitCollections(int step, int zeroVel)
   if ( prec ) {
     collection->submitPositions(step,patch->atom,patch->lattice,prec);
   }
-  if ( Output::velocityNeeded(step) ) {
+  prec = Output::velocityNeeded(step);
+  if ( prec ) {
     collection->submitVelocities(step,zeroVel,patch->atom,prec);
   }
-  if ( Output::forceNeeded(step) ) {
+  prec = Output::forceNeeded(step);
+  if ( prec ) {
     int maxForceUsed = patch->flags.maxForceUsed;
     if ( maxForceUsed > Results::slow ) maxForceUsed = Results::slow;
     collection->submitForces(step,patch->atom,maxForceUsed,patch->f,prec);

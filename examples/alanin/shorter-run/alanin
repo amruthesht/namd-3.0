@@ -20,6 +20,9 @@ pairlistdist 	9.0
 dcdfile	alanin.dcd
 dcdfreq	1
 
+velDCDfile	alanin.vel
+velDCDfreq    1
+
 #restartname	alanin.restart
 #restartfreq	10
 
@@ -38,10 +41,10 @@ IMDport		8888
 IMDfreq		1
 IMDwait		on
 IMDversion     3
-IMDsendPositions        yes
+#IMDsendPositions        yes
 IMDsendEnergies     yes
 #IMDsendTime        yes
-#IMDsendBoxDimensions       yes
+IMDsendBoxDimensions       yes
 IMDsendVelocities       yes
-#IMDsendForces      yes
-IMDwrapPositions       yes
+# IMDsendForces      no
+#IMDwrapPositions       yes

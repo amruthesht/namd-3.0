@@ -4309,7 +4309,7 @@ void Controller::printEnergies(int step, int minimize)
     // ONLY OUTPUT SHOULD OCCUR BELOW THIS LINE!!!
 
     if (simParams->IMDon && !(step % simParams->IMDfreq) && ((simParams->IMDversion == 2) || 
-        ((simParams->IMDversion == 3) && (simParams->IMDsendsettings.energies_switch == 1)))) {
+        ((simParams->IMDversion == 3) && (simParams->IMDsendsettings.energies_switch == 1) && (step != simParams->firstTimestep)))) {
       IMDEnergies energies;
       energies.tstep = step;
       energies.T = temp_avg/avg_count;
