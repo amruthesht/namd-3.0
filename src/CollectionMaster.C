@@ -60,9 +60,9 @@ void CollectionMaster::receivePositions(CollectVectorMsg *msg)
 #endif
 }
 
-void CollectionMaster::enqueuePositions(int seq, BigReal dt, Lattice &lattice)
+void CollectionMaster::enqueuePositions(int seq, Lattice &lattice)
 {
-  positions.enqueue(seq,dt,lattice);
+  positions.enqueue(seq,lattice);
 
 #ifndef MEM_OPT_VERSION
   CollectVectorInstance *c;
@@ -87,12 +87,12 @@ void CollectionMaster::disposePositions(CollectVectorInstance *c)
     if (Node::Object()->simParameters->CUDASOAintegrate) {
       CProxy_PatchData cpdata(CkpvAccess(BOCclass_group).patchData);
       Output *pout = cpdata.ckLocalBranch()->ptrOutput;
-      pout->coordinate(seq,size,data,fdata,c->lattice,c->dt);
+      pout->coordinate(seq,size,data,fdata,c->lattice);
     }
     else
 #endif
     {
-      Node::Object()->output->coordinate(seq,size,data,fdata,c->lattice,c->dt);
+      Node::Object()->output->coordinate(seq,size,data,fdata,c->lattice);
     }
     c->free();
     exectime = CmiWallTimer()-exectime;
@@ -117,9 +117,8 @@ void CollectionMaster::receiveVelocities(CollectVectorMsg *msg)
 
 void CollectionMaster::enqueueVelocities(int seq)
 {
-  BigReal dtdummy;
   Lattice dummy;
-  velocities.enqueue(seq,dtdummy,dummy);
+  velocities.enqueue(seq,dummy);
 #ifndef MEM_OPT_VERSION
   CollectVectorInstance *c;
   while ( ( c = velocities.removeReady() ) ) { disposeVelocities(c); }
@@ -173,9 +172,8 @@ void CollectionMaster::receiveForces(CollectVectorMsg *msg)
 
 void CollectionMaster::enqueueForces(int seq)
 {
-  BigReal dtdummy;
   Lattice dummy;
-  forces.enqueue(seq,dtdummy,dummy);
+  forces.enqueue(seq,dummy);
 #ifndef MEM_OPT_VERSION
   CollectVectorInstance *c;
   while ( ( c = forces.removeReady() ) ) { disposeForces(c); }

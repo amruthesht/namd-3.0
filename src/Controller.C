@@ -43,6 +43,9 @@
 
 #include "ComputeNonbondedMICKernel.h"
 
+#define IMDv2 2
+#define IMDv3 3
+
 #if defined(USE_GETTIMEOFDAY)
 #include <sys/time.h>
 // Replace CmiWallTimer with our own based on gettimeofday
@@ -4308,8 +4311,23 @@ void Controller::printEnergies(int step, int minimize)
 
     // ONLY OUTPUT SHOULD OCCUR BELOW THIS LINE!!!
 
-    if (simParams->IMDon && !(step % simParams->IMDfreq) && ((simParams->IMDversion == 2) || 
-        ((simParams->IMDversion == 3) && (simParams->IMDsendsettings.energies_switch == 1) && (step != simParams->firstTimestep)))) {
+    if (simParams->IMDon) {
+    if ( ((step % simParams->IMDfreq) == 0) &&
+         ((simParams->IMDversion == IMDv3) 
+         && (simParams->IMDsendsettings.time_switch == 1) 
+         && (step != simParams->firstTimestep)) ) {
+      IMDOutput *imd = NULL;
+      {
+        imd = Node::Object()->imd;
+      }
+      
+      IMDTime time = {simParams->dt, simParams->dt * step, step};
+
+      if (imd != NULL) imd->gather_time(&time);
+    }
+    
+    if (!(step % simParams->IMDfreq) && ((simParams->IMDversion == IMDv2) || 
+        ((simParams->IMDversion == IMDv3) && (simParams->IMDsendsettings.energies_switch == 1) && (step != simParams->firstTimestep)))) {
       IMDEnergies energies;
       energies.tstep = step;
       energies.T = temp_avg/avg_count;
@@ -4322,6 +4340,7 @@ void Controller::printEnergies(int step, int minimize)
       energies.Edihe = dihedralEnergy + crosstermEnergy;
       energies.Eimpr = improperEnergy;
       Node::Object()->imd->gather_energies(&energies);
+    }
     }
 
     if ( marginViolations ) {
@@ -4634,7 +4653,7 @@ void Controller::writeExtendedSystemData(int step, ofstream_namd &file) {
 void Controller::enqueueCollections(int timestep)
 {
   if ( Output::coordinateNeeded(timestep) ){
-    collection->enqueuePositions(timestep,simParams->dt,state->lattice);
+    collection->enqueuePositions(timestep,state->lattice);
   }
   if ( Output::velocityNeeded(timestep) )
     collection->enqueueVelocities(timestep);

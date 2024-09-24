@@ -4,6 +4,7 @@
 
 #include <limits.h>
 #include <vector>
+#include <common.h>
 
 #if ( INT_MAX == 2147483647 )
 typedef int     int32;
@@ -45,8 +46,9 @@ typedef struct {
 } IMDEnergies;
 
 typedef struct {
-  int32 tstep;
-  float dt;
+  BigReal dt;
+  BigReal time;
+  long int tstep;
 } IMDTime;
 
 typedef struct {
@@ -57,24 +59,24 @@ typedef struct {
 
 typedef struct {
   int time_switch;
+  int energies_switch;
   int box_switch;
   int fcoords_switch;
   int wrap_switch;
   int velocities_switch;
   int forces_switch;
-  int energies_switch;
 
   // Method to convert IMDSessionInfo into a std::vector<Type>
   template <typename Type = char>
   std::vector<Type> toTypeVector() const {
     std::vector<Type> data;
     data.push_back(static_cast<Type>(time_switch));
+    data.push_back(static_cast<Type>(energies_switch));
     data.push_back(static_cast<Type>(box_switch));
     data.push_back(static_cast<Type>(fcoords_switch));
     data.push_back(static_cast<Type>(wrap_switch));
     data.push_back(static_cast<Type>(velocities_switch));
     data.push_back(static_cast<Type>(forces_switch));
-    data.push_back(static_cast<Type>(energies_switch));
     return data;
   }
 

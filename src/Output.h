@@ -84,7 +84,7 @@ public :
    void energy(int, BigReal *);			//  Output energies
 
    static int coordinateNeeded(int);
-   void coordinate(int, int, Vector *, FloatVector *, Lattice &, BigReal &);
+   void coordinate(int, int, Vector *, FloatVector *, Lattice &);
 						//  Produce appropriate 
 						//  coordinate output for 
 						//  the current timestep

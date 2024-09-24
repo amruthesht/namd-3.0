@@ -54,7 +54,7 @@ public:
 
   void receiveDataStream(DataStreamMsg *msg);
 
-  void enqueuePositions(int seq, BigReal dt, Lattice &lattice);
+  void enqueuePositions(int seq, Lattice &lattice);
   void enqueueVelocities(int seq);
   void enqueueForces(int seq);
 
@@ -104,7 +104,6 @@ public:
     int ready(void) { return ( ! remaining ); }
 
     int seq;
-    BigReal dt;
     Lattice lattice;
     //mainly used for tracking the progress of wrap_coor operation
     //the write to files will not happen until the wrap_coor is finished,
@@ -136,9 +135,8 @@ public:
       (*c)->append();
     }
 
-    void enqueue(int seq, BigReal dt, Lattice &lattice) {
+    void enqueue(int seq, Lattice &lattice) {
       queue.add(seq);
-      dtqueue.add(dt);
       latqueue.add(lattice);
     }
 
@@ -187,7 +185,6 @@ public:
 
     ResizeArray<CollectVectorInstance*> data;
     ResizeArray<int> queue;
-    ResizeArray<BigReal> dtqueue;
     ResizeArray<Lattice> latqueue;
   }; //end of declaration for CollectionMaster::CollectVectorSequence
 #else
@@ -233,7 +230,6 @@ public:
     int ready(void) { return ( ! remaining ); }
 
     int seq;
-    BigReal dt;
     Lattice lattice;
 
     ResizeArray<Vector> data;
@@ -267,9 +263,8 @@ public:
       (*c)->append(msg, max_index);
     }
 
-    void enqueue(int seq, BigReal dt, Lattice &lattice) {
+    void enqueue(int seq, Lattice &lattice) {
       queue.add(seq);
-      dtqueue.add(dt);
       latqueue.add(lattice);
     }
 
@@ -286,9 +281,7 @@ public:
         {
 	  o = *c;
 	  o->lattice = latqueue[0];
-    o->dt = dtqueue[0];
 	  queue.del(0,1);
-    dtqueue.del(0,1);
 	  latqueue.del(0,1);
         }
       }
@@ -301,7 +294,6 @@ public:
     
     ResizeArray<CollectVectorInstance*> data;
     ResizeArray<int> queue;
-    ResizeArray<BigReal> dtqueue;
     ResizeArray<Lattice> latqueue;
     int blocked;
 
@@ -418,7 +410,6 @@ class CollectMidVectorInstance{
     int ready(void) { return ( ! remaining ); }
 
     int seq;   
-    BigReal dt; 
     Lattice lattice;
 
     ResizeArray<Vector> data;

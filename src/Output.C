@@ -280,7 +280,7 @@ void wrap_coor(FloatVector *coor, Lattice &lattice, float *done) {
 };
 
 void Output::coordinate(int timestep, int n, Vector *coor, FloatVector *fcoor,
-							Lattice &lattice, BigReal &dt)
+							Lattice &lattice)
 {
   SimParameters *simParams = Node::Object()->simParameters;
   double coor_wrapped = 0;
@@ -314,28 +314,9 @@ void Output::coordinate(int timestep, int n, Vector *coor, FloatVector *fcoor,
        ( ((timestep % simParams->IMDfreq) == 0) ||
          (timestep == simParams->firstTimestep) ) )
     {
-    if ((simParams->IMDversion == IMDv2) || ((simParams->IMDversion == IMDv3) 
-         && (simParams->IMDsendsettings.time_switch == 1)))
-    {
-      IMDOutput *imd = NULL;
-#ifdef NODEGROUP_FORCE_REGISTER
-      if (simParams->CUDASOAintegrate) {
-        CProxy_PatchData cpdata(CkpvAccess(BOCclass_group).patchData);
-        imd = cpdata.ckLocalBranch()->imd;
-      }
-      else
-#endif
-      {
-        imd = Node::Object()->imd;
-      }
-      
-      IMDTime time = {timestep, dt};
 
-      if (imd != NULL) imd->gather_time(&time);
-    }
-
-    if ((simParams->IMDversion == IMDv2) || ((simParams->IMDversion == IMDv3) 
-         && (simParams->IMDsendsettings.box_switch == 1)))
+    if ((simParams->IMDversion == IMDv3) 
+         && (simParams->IMDsendsettings.box_switch == 1))
     {
       IMDOutput *imd = NULL;
 #ifdef NODEGROUP_FORCE_REGISTER
@@ -370,6 +351,8 @@ void Output::coordinate(int timestep, int n, Vector *coor, FloatVector *fcoor,
       {
         imd = Node::Object()->imd;
       }
+      if ((simParams->IMDversion == IMDv2) || ((simParams->IMDversion == IMDv3) 
+         && (simParams->IMDsendsettings.wrap_switch == 1)))
       wrap_coor(fcoor,lattice,&fcoor_wrapped);
       if (imd != NULL) imd->gather_coordinates(timestep, n, fcoor);
     }
@@ -448,8 +431,8 @@ int Output::velocityNeeded(int timestep)
     if ( simParams->IMDon &&
        ( ((timestep % simParams->IMDfreq) == 0) ||
          (timestep == simParams->firstTimestep) ) &&
-         ((simParams->IMDversion == IMDv2) || ((simParams->IMDversion == IMDv3) 
-         && (simParams->IMDsendsettings.velocities_switch == 1))) )
+         ((simParams->IMDversion == IMDv3) 
+         && (simParams->IMDsendsettings.velocities_switch == 1)) )
       { velocitiesNeeded |= 1; }
 
   }
@@ -491,8 +474,8 @@ void Output::velocity(int timestep, int n, Vector *vel, FloatVector *fvel)
     if ( simParams->IMDon &&
        ( ((timestep % simParams->IMDfreq) == 0) ||
          (timestep == simParams->firstTimestep) ) &&
-         ((simParams->IMDversion == IMDv2) || ((simParams->IMDversion == IMDv3) 
-         && (simParams->IMDsendsettings.velocities_switch == 1))) )
+         ((simParams->IMDversion == IMDv3) 
+         && (simParams->IMDsendsettings.velocities_switch == 1)) )
     {
       IMDOutput *imd = NULL;
 #ifdef NODEGROUP_FORCE_REGISTER
