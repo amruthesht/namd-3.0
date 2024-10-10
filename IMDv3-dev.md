@@ -1,7 +1,7 @@
 # IMD v3 developement
 
 The IMDv3-dev branch focuses on the developement of a new IMD protocol for sending additional information via IMD.
-Details of the protocol can be found [here](https://heyden-lab-asu.atlassian.net/wiki/x/AQA4).
+Details of the protocol can be found [here](https://github.com/Becksteinlab/imdclient/blob/protocolv3/docs/source/protocol_v3.rst).
 
 ## Instructions for compiling and building NAMD
 
@@ -34,7 +34,19 @@ Unpack NAMD and matching Charm++ source code:
     tar xf charm-8.0.0.tar
 ```
 
-Build and test the Charm++/Converse library (InfiniBand UCX OpenMPI PMIx version):
+Build and test the Charm++/Converse library (testing is optional)
+
+When using single-node multicore version:
+```
+    cd charm-8.0.0
+    ./build charm++ multicore-linux-x86_64 --with-production
+    cd multicore-linux-x86_64/tests/charm++/megatest
+    make
+    ./megatest +p4   (multicore does not support multiple nodes)
+    cd ../../../../..
+```
+
+When using InfiniBand UCX OpenMPI PMIx version:
 (Make sure modules and corresponding headers for openmpi and pmix are available and accessible before running this)
 ```
     cd charm-8.0.0
@@ -44,7 +56,18 @@ Build and test the Charm++/Converse library (InfiniBand UCX OpenMPI PMIx version
     mpiexec -n 4 ./megatest
     cd ../../../../..
 ```
-The `mpiexec` command is run as any other OpenMPI program on your cluster on ana intercative node. Make sure to request appropriate resources for it.
+
+When using MPI version:
+```
+    cd charm-8.0.0
+    env MPICXX=mpicxx ./build charm++ mpi-linux-x86_64 --with-production
+    cd mpi-linux-x86_64/tests/charm++/megatest
+    make pgm
+    mpiexec -n 4 ./megatest   (run as any other MPI program on your cluster)
+    cd ../../../../..
+```
+
+The `mpiexec` command is run as any other OpenMPI or MPI program on your cluster on an intercative node. Make sure to request appropriate resources for it.
 
 ### Installing header-only dependencies
 
@@ -65,25 +88,73 @@ Download and install TCL and FFTW libraries:
 ### Compiling and Building NAMD
 
 Set up build directory and compile for NAMD:
-
+multicore version:
+```
+  ./config Linux-x86_64-g++ --charm-arch multicore-linux-x86_64
+```
 InfiniBand UCX version:
 ```
   ./config Linux-x86_64-g++ --charm-arch ucx-linux-x86_64-ompipmix
 ```
+MPI version:
+```
+  ./config Linux-x86_64-g++ --charm-arch mpi-linux-x86_64
+```
+GPU-resident CUDA multicore version:
+``` 
+    ./config Linux-x86_64-g++ --charm-arch multicore-linux-x86_64 --with-single-node-cuda
+```
+GPU-resident CUDA ethernet version:
+```
+  ./config Linux-x86_64-g++ --charm-arch netlrts-linux-x86_64 --with-single-node-cuda
+```
+GPU-resident HIP multicore version:
+```
+  ./config Linux-x86_64-g++ --charm-arch multicore-linux-x86_64 --with-single-node-hip
+```
+GPU-resident HIP ethernet version:
+```
+  ./config Linux-x86_64-g++ --charm-arch netlrts-linux-x86_64 --with-single-node-hip
+```
+
+You might also need `--cuda-prefix CUDA_DIRECTORY` for the GPU ones, if needed.
+
+Finally, `make` the namd source files to create an executable
 
 ```
   cd Linux-x86_64-g++
   make  
 ```
 
+## Input configuration options
+
+We have introduced new configuration settings in the input file `*.conf` in accordance with the protocol defined [here](https://github.com/Becksteinlab/imdclient/blob/protocolv3/docs/source/protocol_v3.rst). The following options and settings can be set in accordance with the user's need to stream data and trajectory information.
+
+#### General IMD options (same as v2)
+1. `IMDon` - streaming on or off (yes/no)
+2. `IMDport` - port number to listen on (typically 8888)
+3. `IMDfreq` - frequency to send data
+4. `IMDwait` - wait for client to connect before starting simulation (on/off)
+
+#### New IMD options (new in v3)
+5. `IMDversion` - 2 for VMD and 3 for latest protocol
+#### IMD session info settings (yes/no)
+6. `IMDsendPositions` - sending positions of entire system
+7. `IMDsendEnergies` - sending energies and bonded, non-bonded and other contributions
+8. `IMDsendTime` - sending time information (time, dt, step)
+9. `IMDsendBoxDimensions` - sending box dimensions (lattice vectors a, b, c). If box dimensions are not defined, default unit box is sent
+10. `IMDsendVelocities` - sending velocities of entire system
+11. `IMDsendForces` - sending forces on all atoms
+12. `IMDwrapPositions` - wrapping positions to box; applicable when IMDsendPositions is yes
+
 ## Example Run
 
-Run an example simulation (this is a 66-atom simulation) and compare to the sample output (for seed 12345) in the dierctory:
+Run an example simulation (this is a 66-atom simulation) and compare to the `-sample` output files (for seed 12345) in the dierctory:
 ```
-  ./namd3 ../examples/alanin/shorter-run/alanin
+  ./namd3 ../examples/alanin/shorter-run/alanin.conf
 ```
 
-If running on a cluster with N cores allocated for the job, one might have to run something like
+If running on a cluster with $N$ cores allocated for the job, one might have to run something like
 ```
-  mpiexec -n N ./namd3 ../examples/alanin/shorter-run/alanin
+  mpiexec -n N ./namd3 ../examples/alanin/shorter-run/alanin.conf
 ```
